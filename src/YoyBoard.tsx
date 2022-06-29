@@ -6,15 +6,31 @@ import { TableComponent } from "./TableComponent";
 import { CellComponent } from "./CellComponent";
 import { playerColor } from "./PlayerColor";
 
-export const YoyBoard = ({ G, ctx, moves }: BoardProps<GameState>) => {
+interface SpawnSoldierMode {};
+
+interface MoveSoldierMode {
+  i: number;
+  j: number;
+};
+
+type Mode = null | SpawnSoldierMode | MoveSoldierMode;
+
+export const YoyBoard =
+  ({ G, ctx, moves, undo, redo }: BoardProps<GameState>) => {
   return <>
-    <h3>Current player:<br/><br/><CellComponent owner={ ctx.currentPlayer } land={ null } /></h3>
     <TableComponent cells={
-      G.cells.map(row =>
-        row.map(cell =>
-          <CellComponent {...cell} />
+      Object.entries(G.money).map(([player, balance]) => [
+        <span>{ player }</span>, <span>{ balance }</span>])
+    } />
+    <button onClick={ undo }>Undo</button>
+    <button onClick={ redo }>Redo</button>
+    <h3>Current player:<br/><br/><CellComponent owner={ ctx.currentPlayer } land={ null } onClick={ () => {} } /></h3>
+    <TableComponent cells={
+      G.cells.map((row, i) =>
+        row.map((cell, j) =>
+          <CellComponent {...cell} onClick={ () => moves.spawnSoldier(i, j) } />
         )
       )
-    }/>
+    } />
   </>;
 };
