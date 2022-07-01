@@ -1,13 +1,13 @@
 import React from "react";
-import icon from "./Soldier.png";
 
-export interface SoldierComponentProps {
+export interface SoldierProps {
+  icon: string;
   width: number;
   height: number;
 };
 
-export const SoldierComponent: React.FC<SoldierComponentProps> =
-  ({ width, height }) => {
+export const SoldierComponent: React.FC<SoldierProps> =
+  ({ icon, width, height }) => {
 
   const style = {
     width: `${width}px`,

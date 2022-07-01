@@ -1,19 +1,25 @@
-import type { Game, Move } from "boardgame.io";
+import { Game, Ctx, Move } from "boardgame.io";
 import { INVALID_MOVE } from "boardgame.io/core";
-
-export interface Soldier {};
+import { Land, lands } from "./Functions/Lands";
 
 export interface CellState {
   owner: null | string;
-  land: null | Soldier;
+  land: null | number;
+};
+
+export interface Money {
+  balance: number;
+  profit: number;
 };
 
 export interface GameState {
   cells: CellState[][];
   money: {
-    [player: string]: number;
+    [player: string]: Money;
   };
 };
+
+
 
 export const YoyGame: Game<GameState> = {
   setup: () => {
@@ -24,19 +30,32 @@ export const YoyGame: Game<GameState> = {
       )
     );
     cells[0][0].owner = "0";
+    cells[0][1].owner = "0";
+    cells[0][2].owner = "0";
     cells[N - 1][N - 1].owner = "1";
-    return { cells, money: {"0": 10, "1": 10} };
+    cells[N - 1][N - 2].owner = "1";
+    cells[N - 1][N - 3].owner = "1";
+    return { cells, money: {
+      "0": { balance: 10, profit: 3 },
+      "1": { balance: 10, profit: 3 },
+    }};
   },
 
   moves: {
-    spawnSoldier: (G, ctx, i, j) => {
+    spawnLand: (G, ctx, landId, i, j) => {
       if (!(G.cells[i][j].owner === ctx.currentPlayer &&
             G.cells[i][j].land === null &&
-            G.money[ctx.currentPlayer] >= 10)) {
+            G.money[ctx.currentPlayer].balance >= lands[landId].cost)) {
         return INVALID_MOVE;
       }
-      G.money[ctx.currentPlayer] -= 10;
-      G.cells[i][j].land = {} as Soldier;
+      G.money[ctx.currentPlayer].balance -= lands[landId].cost;
+      G.money[ctx.currentPlayer].profit += lands[landId].profit;
+      G.cells[i][j].land = landId;
+    },
+
+    endTurn: (G, ctx) => {
+      G.money[ctx.currentPlayer].balance += G.money[ctx.currentPlayer].profit;
+      ctx.events!.endTurn();
     },
   },
 };
