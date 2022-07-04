@@ -1,16 +1,19 @@
 import React from "react";
-import { CellState } from "../YoyGame";
-import { playerColor } from "../Functions/PlayerColor";
-import { SoldierComponent } from "../SoldierComponent";
-import { Land, lands } from "../Functions/Lands";
+import { Cell } from "../../State/Game";
+import { SoldierComponent } from "../Soldier";
+import { playerColor } from "../../Common/PlayerColor";
 
-export interface CellProps extends CellState {
+import icon from "../../Assets/Soldier1.png";
+
+export interface CellProps {
+  owner: Cell["owner"];
+  block: Cell["block"];
   brightness?: number;
   onClick: () => void;
 };
 
 export const CellComponent: React.FC<CellProps> =
-  ({ owner, land, brightness, onClick }) => {
+  ({ owner, block, brightness, onClick }) => {
 
   const style = {
     width: "50px",
@@ -23,9 +26,9 @@ export const CellComponent: React.FC<CellProps> =
 
   return (
     <div style={ style } onClick={ onClick } >
-      { land === null ? <></> :
+      { block.type === "Null" ? <></> :
         <SoldierComponent
-          icon={ lands[land].icon }
+          icon={ icon }
           width={ 44 }
           height={ 44 }
         />
