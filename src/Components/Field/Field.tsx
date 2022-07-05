@@ -1,7 +1,7 @@
 import React from "react";
+import { Vector2 } from "../../Common/Vector2";
 import { Cell } from "../../State/Game";
 import { CellComponent } from "../Cell";
-import { Vector2 } from "../../Common/Vector2";
 
 export type FieldProps = {
   cells: Cell[][];
@@ -18,7 +18,8 @@ export const FieldComponent: React.FC<FieldProps> =
           <tr key={i}>{
             row.map((cell, j) =>
               <td key={j}>{
-                <CellComponent { ...cell } onClick={ () => onClick({i, j}) } />
+                <CellComponent { ...cell }
+                  onClick={ () => onClick({ type: "Vector2", i, j }) } />
               }</td>
             )
           }</tr>

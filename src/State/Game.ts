@@ -1,32 +1,14 @@
 import { Game, Ctx, Move } from "boardgame.io";
 import { INVALID_MOVE } from "boardgame.io/core";
 import { isEqual, cloneDeep, concat, sumBy } from "lodash";
-import { Vector2 } from "../Common/Vector2";
-
-export interface Null {
-  type: "Null";
-};
+import { Vector2, sum } from "../Common/Vector2";
+import { Null } from "../Common/Null";
+import { Block } from "../Common/Block";
 
 export interface Owner {
   type: "Owner";
   name: string;
 };
-
-export interface Soldier {
-  type: "Soldier";
-  level: number;
-};
-
-export interface Farm {
-  type: "Farm";
-};
-
-export interface Tower {
-  type: "Tower";
-  level: number;
-};
-
-export type Block = Null | Soldier | Farm | Tower;
 
 export interface Cell {
   type: "Cell";
@@ -82,21 +64,25 @@ export const getDistance =
 (G: GameState, ctx: Ctx, fromPos: Vector2, toPos: Vector2): number => {
   const dp: number[][] = G.cells.map((row: Cell[]): number[] =>
     row.map(_ => -1));
-
-  const dfs = (u: Vector2): void =>
-    ([[0, 1], [0, -1], [1, 0], [-1, 0]]).map(([i, j]) => ({i, j})).forEach(
-    (d: Vector2): void => {
-      const v: Vector2 = { i: u.i + d.i, j: u.j + d.j };
-      if (0 <= v.i && v.i < G.cells.length &&
-          0 <= v.j && v.j < G.cells[v.i].length &&
+  dp[fromPos.i][fromPos.j] = 0;
+  const queue: Vector2[] = [fromPos];
+  const edges: Vector2[] = [[0, 1], [0, -1], [1, 0], [-1, 0]].map(([i, j]) =>
+    ({ type: "Vector2", i, j }));
+  
+  while (queue.length > 0) {
+    const u: Vector2 = queue.shift() as Vector2;
+    edges.forEach((d: Vector2) => {
+      const v: Vector2 = sum(u, d);
+      if (0 <= v.i && v.i < dp.length && 0 <= v.j && v.j < dp[v.i].length &&
           dp[v.i][v.j] === -1) {
         dp[v.i][v.j] = dp[u.i][u.j] + 1;
-        dfs(v);
+        if (isEqual(G.cells[v.i][v.j].owner,
+          { type: "Owner", name: ctx.currentPlayer })) {
+          queue.push(v);
+        }
       }
     });
-  
-  dp[fromPos.i][fromPos.j] = 0;
-  dfs(fromPos);
+  }
 
   return dp[toPos.i][toPos.j];
 }

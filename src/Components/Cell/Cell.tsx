@@ -1,9 +1,7 @@
 import React from "react";
 import { Cell } from "../../State/Game";
-import { SoldierComponent } from "../Soldier";
 import { playerColor } from "../../Common/PlayerColor";
-
-import icon from "../../Assets/Soldier1.png";
+import { BlockComponent } from "../Block";
 
 export interface CellProps {
   owner: Cell["owner"];
@@ -27,8 +25,8 @@ export const CellComponent: React.FC<CellProps> =
   return (
     <div style={ style } onClick={ onClick } >
       { block.type === "Null" ? <></> :
-        <SoldierComponent
-          icon={ icon }
+        <BlockComponent
+          block={ block }
           width={ 44 }
           height={ 44 }
         />

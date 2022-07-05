@@ -1,4 +1,5 @@
-import { Null, Owner } from "../State/Game";
+import { Null } from "./Null";
+import { Owner } from "../State/Game";
 
 export const playerColor = (player: Null | Owner): string => {
   if (player.type === "Null") {
