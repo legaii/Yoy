@@ -1,6 +1,6 @@
 import React from "react";
+import { playerColor } from "../../Common/Player";
 import { Cell } from "../../State/Game";
-import { playerColor } from "../../Common/PlayerColor";
 import { BlockComponent } from "../Block";
 
 export interface CellProps {

@@ -2,17 +2,13 @@ import { Game, Ctx, Move } from "boardgame.io";
 import { INVALID_MOVE } from "boardgame.io/core";
 import { isEqual, cloneDeep, concat, sumBy } from "lodash";
 import { Vector2, sum } from "../Common/Vector2";
-import { Null } from "../Common/Null";
+import { Null, Maybe } from "../Common/Null";
+import { Player } from "../Common/Player";
 import { Block } from "../Common/Block";
-
-export interface Owner {
-  type: "Owner";
-  name: string;
-};
 
 export interface Cell {
   type: "Cell";
-  owner: Null | Owner;
+  owner: Maybe<Player>;
   block: Block;
 };
 
@@ -35,7 +31,7 @@ export const getCost = (G: GameState, ctx: Ctx, block: Block): number => {
     case "Farm":
       return concat(...G.cells).filter((cell: Cell) => isEqual(cell, {
         type: "Cell",
-        owner: { type: "Owner", name: ctx.currentPlayer },
+        owner: { type: "Player", name: ctx.currentPlayer },
         block: { type: "Farm" },
       })).length * 2 + 12;
     case "Tower":
@@ -45,7 +41,7 @@ export const getCost = (G: GameState, ctx: Ctx, block: Block): number => {
 
 export const getProfit = (G: GameState, ctx: Ctx): number =>
   sumBy(concat(...G.cells), (cell: Cell) => {
-    if (!isEqual(cell.owner, { type: "Owner", name: ctx.currentPlayer })) {
+    if (!isEqual(cell.owner, { type: "Player", name: ctx.currentPlayer })) {
       return 0;
     }
     switch (cell.block.type) {
@@ -77,7 +73,7 @@ export const getDistance =
           dp[v.i][v.j] === -1) {
         dp[v.i][v.j] = dp[u.i][u.j] + 1;
         if (isEqual(G.cells[v.i][v.j].owner,
-          { type: "Owner", name: ctx.currentPlayer })) {
+          { type: "Player", name: ctx.currentPlayer })) {
           queue.push(v);
         }
       }
@@ -98,8 +94,8 @@ export const game: Game<GameState> = {
       )
     );
     [0, 1, 2].forEach((i: number) => {
-      cells[0][i].owner = { type: "Owner", name: "0" };
-      cells[N - 1][N - i - 1].owner = { type: "Owner", name: "1" };
+      cells[0][i].owner = { type: "Player", name: "0" };
+      cells[N - 1][N - i - 1].owner = { type: "Player", name: "1" };
     });
     return { type: "GameState", cells, money: { "0": 10, "1": 10 } };
   },
@@ -108,7 +104,7 @@ export const game: Game<GameState> = {
     spawn: (G, ctx, block: Block, pos: Vector2) => {
       const cost: number = getCost(G, ctx, block);
       const target: Cell = G.cells[pos.i][pos.j];
-      if (!(isEqual(target.owner, { type: "Owner", name: ctx.currentPlayer }) &&
+      if (!(isEqual(target.owner, { type: "Player", name: ctx.currentPlayer }) &&
             isEqual(target.block, { type: "Null" }) &&
             G.money[ctx.currentPlayer] >= cost)) {
         return INVALID_MOVE;
@@ -120,7 +116,7 @@ export const game: Game<GameState> = {
     move: (G, ctx, fromPos: Vector2, toPos: Vector2) => {
       const fromCell: Cell = G.cells[fromPos.i][fromPos.j];
       const toCell: Cell = G.cells[toPos.i][toPos.j];
-      if (!(isEqual(fromCell.owner, { type: "Owner", name: ctx.currentPlayer }) &&
+      if (!(isEqual(fromCell.owner, { type: "Player", name: ctx.currentPlayer }) &&
             fromCell.block.type === "Soldier")) {
         return INVALID_MOVE;
       }

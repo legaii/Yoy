@@ -17,10 +17,10 @@ export const FieldComponent: React.FC<FieldProps> =
         cells.map((row, i) =>
           <tr key={i}>{
             row.map((cell, j) =>
-              <td key={j}>{
+              <td key={j}>
                 <CellComponent { ...cell }
                   onClick={ () => onClick({ type: "Vector2", i, j }) } />
-              }</td>
+              </td>
             )
           }</tr>
         )

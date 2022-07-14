@@ -3,10 +3,11 @@ import { Ctx } from "boardgame.io";
 import { BoardProps } from "boardgame.io/react";
 import { isEqual } from "lodash";
 import { Vector2 } from "../../Common/Vector2";
-import { Null } from "../../Common/Null";
+import { Null, Maybe } from "../../Common/Null";
+import { Player } from "../../Common/Player";
 import { Block, blocks } from "../../Common/Block";
-import { GameState } from "../../State/Game";
-import { SelectBlockComponent } from "../SelectBlock";
+import { Cell, GameState } from "../../State/Game";
+import { SelectCellComponent } from "../SelectCell";
 import { FieldComponent } from "../Field";
 import { CellComponent } from "../Cell";
 
@@ -14,27 +15,26 @@ import { CellComponent } from "../Cell";
 
 export const BoardComponent =
 ({ G, ctx, moves, undo, redo }: BoardProps<GameState>) => {
+
+  const owner: Player = { type: "Player", name: ctx.currentPlayer };
+
   const [selectedBlock, setSelectedBlock] =
     useState<Block>({ type: "Null" });
   
-  const [selectedCell, setSelectedCell] =
+  const [selectedPos, setSelectedPos] =
     useState<Null | Vector2>({ type: "Null" });
 
   return (
   <>
-    <CellComponent
-      owner={{ type: "Owner", name: ctx.currentPlayer }}
-      block={{ type: "Null" }}
-      onClick={ () => {} }
-    />
-
     <button onClick={ undo }>Undo</button>
     <button onClick={ redo }>Redo</button>
     <button onClick={ () => moves.endTurn() }>End turn</button>
 
-    <SelectBlockComponent
-      blocks={ blocks }
-      listener={ (block: Block) => setSelectedBlock(block) }
+    <SelectCellComponent
+      cells={ [blocks.map((block: Block) => ({ type: "Cell", owner, block }))] }
+      selectedCell={{ type: "Cell", owner, block: selectedBlock }}
+      listener={ (cell: Maybe<Cell>): void => setSelectedBlock(
+        cell.type === "Null" ? { type: "Null" } : cell.block) }
     />
 
     <FieldComponent
@@ -42,19 +42,19 @@ export const BoardComponent =
       onClick={ (pos: Vector2): void => {
         if (selectedBlock.type !== "Null") {
           moves.spawn(selectedBlock, pos);
-          // setSelectedBlock({ type: "Null" });
+          setSelectedBlock({ type: "Null" });
           return;
         }
-        if (selectedCell.type === "Null") {
-          setSelectedCell(pos);
+        if (selectedPos.type === "Null") {
+          setSelectedPos(pos);
           return;
         }
-        if (isEqual(selectedCell, pos)) {
-          setSelectedCell({ type: "Null" });
+        if (isEqual(selectedPos, pos)) {
+          setSelectedPos({ type: "Null" });
           return;
         }
-        moves.move(selectedCell, pos);
-        setSelectedCell({ type: "Null" });
+        moves.move(selectedPos, pos);
+        setSelectedPos({ type: "Null" });
       }}
     />
   </>);
