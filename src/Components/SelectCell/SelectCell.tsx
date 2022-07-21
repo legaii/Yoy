@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { isEqual } from "lodash";
-import { Vector2 } from "../../Common/Vector2";
+import { Vector2, getSize } from "../../Common/Vector2";
 import { Maybe } from "../../Common/Null";
-import { Cell } from "../../State/Game";
+import { Cell } from "../../Common/State";
+import { TableComponent } from "../Table";
 import { CellComponent } from "../Cell";
 
 
@@ -15,28 +16,20 @@ export interface SelectCellProps {
 
 
 
-export const SelectCellComponent: React.FC<SelectCellProps> =
-({ cells, selectedCell, listener }) => (
-  <table>
-    <tbody>{
-      cells.map((row: Cell[], i: number) =>
-        <tr key={i}>{
-          row.map((cell: Cell, j: number) => {
-            const isSelectedCell: boolean = isEqual(cell, selectedCell);
-            const selectCell = (): void => listener(
-              isSelectedCell ? { type: "Null" } : cell);
-            return <td key={j}>
-              <CellComponent
-                key={i}
-                owner={cell.owner}
-                block={cell.block}
-                brightness={ isSelectedCell ? 125 : 100 }
-                onClick={ selectCell }
-              />
-            </td>;
-          })
-        }</tr>
-      )
-    }</tbody>
-  </table>
-);
+export const SelectCellComponent: React.FC<SelectCellProps> = (
+  { cells, selectedCell, listener }
+) => (<TableComponent
+  size={ getSize(cells) }
+  getItem={ (pos: Vector2) => {
+    const cell: Cell = cells[pos.i][pos.j];
+    const isSelectedCell: boolean = isEqual(cell, selectedCell);
+    const selectCell = (): void => listener(
+      isSelectedCell ? { type: "Null" } : cell);
+    return <CellComponent
+      owner={ cell.owner }
+      block={ cell.block }
+      brightness={ isSelectedCell ? 125 : 100 }
+      onClick={ selectCell }
+    />;
+  }}
+/>);
