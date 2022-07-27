@@ -1,5 +1,6 @@
 import React from "react";
 import { isEqual } from "lodash";
+import { Maybe } from "../../Common/Null";
 import { Block } from "../../Common/Block";
 import { JumpingComponent } from "../Jumping";
 
@@ -8,11 +9,12 @@ import iconSoldier2 from "../../Assets/Soldier2.png";
 import iconSoldier3 from "../../Assets/Soldier3.png";
 import iconSoldier4 from "../../Assets/Soldier4.png";
 import iconFarm from "../../Assets/Farm.png";
-import iconTower from "../../Assets/Tower.png";
+import iconTower2 from "../../Assets/Tower2.png";
+import iconTower3 from "../../Assets/Tower3.png";
 
 
 
-const getIcon = (block: Block): string => {
+const getIcon = (block: Maybe<Block>): string => {
   switch (block.type) {
     case "Null":
       return "";
@@ -24,14 +26,17 @@ const getIcon = (block: Block): string => {
     case "Farm":
       return iconFarm;
     case "Tower":
-      return iconTower;
+      return [
+        iconTower2,
+        iconTower3,
+      ][block.level - 2];
   }
 };
 
 
 
 export interface BlockProps {
-  block: Block;
+  block: Maybe<Block>;
   width: number;
   height: number;
   jumping?: boolean;

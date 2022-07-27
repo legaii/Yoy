@@ -1,5 +1,4 @@
 import { concat } from "lodash";
-import { Null } from "./Null";
 
 export interface Soldier {
   type: "Soldier";
@@ -16,11 +15,12 @@ export interface Tower {
   level: number;
 };
 
-export type Block = Null | Soldier | Farm | Tower;
+export type Block = Soldier | Farm | Tower;
 
 export const blocks: Block[] = concat<Block>(
   [1, 2, 3, 4].map((level: number) =>
     ({ type: "Soldier", level, movable: true })),
   { type: "Farm" },
   { type: "Tower", level: 2 },
+  { type: "Tower", level: 3 },
 );

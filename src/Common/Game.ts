@@ -4,7 +4,7 @@ import { isEqual, cloneDeep, concat } from "lodash";
 import { Vector2, sum } from "./Vector2";
 import { Block } from "./Block";
 import {
-  Cell, GameState, getCost, getProfit, getDistance, trySpawn, tryMove
+  Cell, GameState, getCost, getProfit, trySpawn, tryMove
 } from "./State";
 import { getPlayer } from "./GetPlayer";
 

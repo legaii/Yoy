@@ -6,7 +6,7 @@ import { BlockComponent } from "../Block";
 
 export interface CellProps {
   owner: Maybe<Player>;
-  block: Block;
+  block: Maybe<Block>;
   jumping?: boolean;
   brightness?: number;
   onClick: () => void;

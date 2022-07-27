@@ -22,7 +22,7 @@ export const BoardComponent =
   const owner: Player = getPlayer(ctx);
 
   const [selectedBlock, setSelectedBlock] =
-    useState<Block>({ type: "Null" });
+    useState<Maybe<Block>>({ type: "Null" });
   
   const [selectedPos, setSelectedPos] =
     useState<Maybe<Vector2>>({ type: "Null" });
