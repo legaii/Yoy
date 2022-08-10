@@ -1,10 +1,8 @@
 import { Game, Ctx, Move } from "boardgame.io";
 import { INVALID_MOVE } from "boardgame.io/core";
-import { isEqual, cloneDeep, concat } from "lodash";
-import { Vector2, sum } from "./Vector2";
-import { Block } from "./Block";
+import { Vector2 } from "./Vector2";
 import {
-  Cell, GameState, getCost, getProfit, trySpawn, tryMove
+  Block, rules, BlockContainer, Cell, GameState, getProfit, trySpawn, tryMove
 } from "./State";
 import { getPlayer } from "./GetPlayer";
 
@@ -42,7 +40,10 @@ export const game: Game<GameState> = {
       G.cells.forEach(
         (row: Cell[]): void => row.forEach(
           (cell: Cell): void => {
-            if (cell.block.type === "Soldier") {
+            if (
+              cell.block.type !== "Null" &&
+              rules.getDistance(cell.block.block) > 0
+            ) {
               cell.block.movable = true;
             }
           }

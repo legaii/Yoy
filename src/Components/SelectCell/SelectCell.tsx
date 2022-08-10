@@ -26,8 +26,7 @@ export const SelectCellComponent: React.FC<SelectCellProps> = (
     const selectCell = (): void => listener(
       isSelectedCell ? { type: "Null" } : cell);
     return <CellComponent
-      owner={ cell.owner }
-      block={ cell.block }
+      cell={ cell }
       brightness={ isSelectedCell ? 125 : 100 }
       onClick={ selectCell }
     />;

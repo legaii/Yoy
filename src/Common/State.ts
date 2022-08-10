@@ -1,18 +1,25 @@
-import { isEqual, cloneDeep, concat, sumBy } from "lodash";
+import { isEqual, cloneDeep, concat } from "lodash";
+
 import { Vector2, sum, getSize } from "./Vector2";
 import { Null, Maybe } from "./Null";
 import { Player } from "./Player";
-import { Soldier, Tower, Block } from "./Block";
+import type { Block } from "./Classic";
+import { rules } from "./Classic";
 
 
+export { Block, rules };
+
+export interface BlockContainer {
+  type: "BlockContainer";
+  block: Block;
+  movable: boolean;
+};
 
 export interface Cell {
   type: "Cell";
   owner: Maybe<Player>;
-  block: Maybe<Block>;
+  block: Maybe<BlockContainer>;
 };
-
-
 
 export interface GameState {
   type: "GameState";
@@ -21,47 +28,6 @@ export interface GameState {
     [player: string]: number;
   };
 };
-
-
-
-export const getCost = (
-  G: GameState, player: Player, block: Block
-): number => {
-  switch (block.type) {
-    case "Soldier":
-      return block.level * 10;
-    case "Farm":
-      return concat(...G.cells).filter((cell: Cell) => isEqual(cell, {
-        type: "Cell",
-        owner: player,
-        block: { type: "Farm" },
-      })).length * 2 + 12;
-    case "Tower":
-      return (block.level - 1) * 20 - 5;
-  }
-};
-
-
-
-export const getProfit = (
-  G: GameState, player: Player
-): number => sumBy(
-  concat(...G.cells), (cell: Cell) => {
-    if (!isEqual(cell.owner, player)) {
-      return 0;
-    }
-    switch (cell.block.type) {
-      case "Null":
-        return 1;
-      case "Soldier":
-        return Math.pow(3, cell.block.level - 1) * -2 + 1;
-      case "Farm":
-        return 5;
-      case "Tower":
-        return [0, 5][cell.block.level - 2];
-    }
-  }
-);
 
 
 
@@ -106,31 +72,50 @@ const getDistance = (
 
 
 
-const getLevel = (block: Maybe<Block>): number => {
-  if (block.type === "Null" || block.type === "Farm") {
-    return 0;
-  }
-  return block.level;
+const getBlocks = (G: GameState, player: Player): Block[] => {
+  return concat(...G.cells).filter(
+    (cell: Cell): boolean => (
+      isEqual(cell.owner, player) && cell.block.type !== "Null"
+    )
+  ).map(
+    (cell: Cell): Block => (cell.block as BlockContainer).block
+  );
 };
 
 
 
+export const getProfit = (G: GameState, player: Player): number => {
+  return concat(...G.cells).filter(
+    (cell: Cell): boolean => isEqual(cell.owner, player)
+  ).length + rules.getProfit(getBlocks(G, player));
+}
+
+
+
 const tryMerge = (
-  G: GameState, pos: Vector2, cellDelta: Cell, doIt: boolean
+  G: GameState, player: Player,
+  block: Block, pos: Vector2, spawn: boolean, doIt: boolean
 ): boolean => {
 
   const cell: Cell = G.cells[pos.i][pos.j];
 
-  if (!isEqual(cell.owner, cellDelta.owner)) {
+  if (!isEqual(cell.owner, player)) {
     if (!(
-      cellDelta.block.type === "Soldier" &&
-      cellDelta.block.level > getLevel(cell.block) &&
+      rules.getDistance(block) > 0 &&
+      (
+        cell.block.type === "Null" ||
+        rules.getStrength(cell.block.block) < rules.getStrength(block)
+      ) &&
+      getEdges(G, pos).filter(
+        (u: Vector2): boolean => isEqual(G.cells[u.i][u.j].owner, player)
+      ).length > 0 &&
       getEdges(G, pos).filter(
         (u: Vector2): boolean => {
           const uCell: Cell = G.cells[u.i][u.j];
           return (
             isEqual(uCell.owner, cell.owner) &&
-            (cellDelta.block as Soldier).level <= getLevel(cell.block)
+            uCell.block.type !== "Null" &&
+            rules.getStrength(block) <= rules.getStrength(uCell.block.block)
           );
         }
       ).length == 0
@@ -138,45 +123,36 @@ const tryMerge = (
       return false;
     }
     if (doIt) {
-      cell.owner = cloneDeep(cellDelta.owner);
-      cell.block = cloneDeep(cellDelta.block);
+      cell.owner = cloneDeep(player);
+      cell.block = {
+        type: "BlockContainer", movable: false, block: cloneDeep(block)
+      };
     }
     return true;
   }
 
   if (cell.block.type === "Null") {
     if (doIt) {
-      cell.block = cloneDeep(cellDelta.block);
+      cell.block = {
+        type: "BlockContainer",
+        movable: spawn && rules.getDistance(block) > 0,
+        block: cloneDeep(block)
+      };
     }
     return true;
   }
 
-  if (cell.block.type !== cellDelta.block.type) {
+  const newBlock: Maybe<Block> = rules.merge(cell.block.block, block);
+
+  if (newBlock.type === "Null") {
     return false;
   }
 
-  if (cell.block.type === "Soldier") {
-    const level: number = cell.block.level + (cellDelta.block as Soldier).level;
-    if (level > 4) {
-      return false;
-    }
-    if (doIt) {
-      cell.block.level = level;
-    }
-    return true;
+  if (doIt) {
+    cell.block.block = newBlock;
   }
-
-  if (cell.block.type === "Tower") {
-    if (cell.block.level >= (cellDelta.block as Tower).level) {
-      return false;
-    }
-    if (doIt) {
-      cell.block.level = (cellDelta.block as Tower).level;
-    }
-    return true;
-  }
-
-  return false;
+  
+  return true;
 };
 
 
@@ -186,34 +162,11 @@ export const trySpawn = (
   block: Block, pos: Vector2, doIt: boolean
 ): boolean => {
 
-  block = cloneDeep(block);
-  const cell: Cell = { type: "Cell", owner: player, block };
-  const cost: number = getCost(G, player, block);
-  const target: Cell = G.cells[pos.i][pos.j];
-
-  if (G.money[player.name] < cost) {
-    return false;
-  }
-
-  if (isEqual(target.owner, player)) {
-    if (!tryMerge(G, pos, cell, doIt)) {
-      return false;
-    }
-    if (doIt) {
-      G.money[player.name] -= cost;
-    }
-    return true;
-  }
-
-  if (block.type === "Soldier") {
-    block.movable = false;
-  }
+  const cost: number = rules.getCost(getBlocks(G, player), block);
 
   if (!(
-    getEdges(G, pos).filter(
-      (u: Vector2): boolean => isEqual(G.cells[u.i][u.j].owner, player)
-    ).length > 0 &&
-    tryMerge(G, pos, cell, doIt)
+    cost <= G.money[player.name] &&
+    tryMerge(G, player, block, pos, true, doIt)
   )) {
     return false;
   }
@@ -236,7 +189,7 @@ export const tryMove = (
 
   if (!(
     isEqual(fromCell.owner, player) &&
-    fromCell.block.type === "Soldier" &&
+    fromCell.block.type !== "Null" &&
     fromCell.block.movable
   )) {
     return false;
@@ -244,18 +197,16 @@ export const tryMove = (
 
   const d: number = getDistance(G, player, fromPos, toPos);
 
-  if (d === -1 || d > 4) {
+  if (!(
+    0 <= d && d <= rules.getDistance(fromCell.block.block) &&
+    tryMerge(G, player, fromCell.block.block, toPos, false, doIt)
+  )) {
     return false;
   }
 
-  const fromCellMutable: Cell = doIt ? fromCell : cloneDeep(fromCell);
-  (fromCellMutable.block as Soldier).movable = false;
-
-  if (!tryMerge(G, toPos, fromCellMutable, doIt)) {
-    return false;
+  if (doIt) {
+    fromCell.block = { type: "Null" };
   }
-
-  fromCellMutable.block = { type: "Null" };
 
   return true;
 };

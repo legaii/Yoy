@@ -1,37 +1,33 @@
 import React from "react";
-import { Maybe } from "../../Common/Null";
-import { Player, playerColor } from "../../Common/Player";
-import { Block } from "../../Common/Block";
+import { playerColor } from "../../Common/Player";
+import { Cell } from "../../Common/State";
 import { BlockComponent } from "../Block";
 
 export interface CellProps {
-  owner: Maybe<Player>;
-  block: Maybe<Block>;
-  jumping?: boolean;
+  cell: Cell;
   brightness?: number;
   onClick: () => void;
 };
 
 export const CellComponent: React.FC<CellProps> =
-  ({ owner, block, jumping, brightness, onClick }) => {
+  ({ cell, brightness, onClick }) => {
 
   const style = {
     width: "50px",
     height: "50px",
     display: "flex",
     alignItems: "center",
-    background: playerColor(owner),
+    background: playerColor(cell.owner),
     filter: `brightness(${brightness}%)`,
   };
 
   return (
     <div style={ style } onClick={ onClick } >
-      { block.type === "Null" ? <></> :
+      { cell.block.type === "Null" ? <></> :
         <BlockComponent
-          block={ block }
+          block={ cell.block }
           width={ 44 }
           height={ 44 }
-          jumping={ jumping }
         />
       }
     </div>
